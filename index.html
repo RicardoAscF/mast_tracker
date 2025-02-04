@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro Horas Sin +</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f0f0f0;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        label {
+            font-size: 1.2em;
+        }
+        input {
+            font-size: 1em;
+            padding: 10px;
+            margin: 10px 0;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            font-size: 1em;
+            padding: 10px 15px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 5px;
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #historial {
+            margin-top: 20px;
+        }
+        #grafica {
+            margin-top: 20px;
+        }
+        canvas {
+            width: 100% !important;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Registro De Horas Sin</h1>
+    <label for="minutos">Horas:</label>
+    <input type="number" id="minutos" placeholder="Ingrese los minutos" required>
+    <button id="registrar">Registrar</button>
+    <button id="borrar">Borrar Registros</button>
+    <button id="generar-grafica">Generar Gráfica</button>
+
+    <div id="historial">
+        <h2>Historial de Registros</h2>
+        <ul id="lista-historial"></ul>
+    </div>
+
+    <div id="grafica">
+        <h2>Gráfica de Registros</h2>
+        <canvas id="myChart"></canvas>
+    </div>
+
+    <script>
+        // Inicializar el arreglo de registros
+        let registros = JSON.parse(localStorage.getItem('registros')) || [];
+        let chartInstance;
+
+        // Cargar el historial en la página
+        function cargarHistorial() {
+            const listaHistorial = document.getElementById('lista-historial');
+            listaHistorial.innerHTML = '';
+            registros.forEach((registro, index) => {
+                const li = document.createElement('li');
+                li.textContent = `Registro ${index + 1}: ${registro.minutos} minutos (Registrado el ${registro.fecha})`;
+                listaHistorial.appendChild(li);
+            });
+        }
+
+        // Función para obtener colores según minutos
+        function obtenerColor(minutos, index) {
+             // Siempre rojo si es menor a 48
+             if (minutos < 48) return 'rgba(255, 99, 132, 0.5)'; // Rojo
+            
+            // Rojo si es menor que el anterior
+            if (index > 0 && minutos < registros[index - 1].minutos) {
+                return 'rgba(255, 99, 132, 0.5)'; // Rojo
+            }
+            
+            // Verde en cualquier otro caso
+            return 'rgba(75, 192, 192, 0.5)';
+        }
+
+        // Registrar el tiempo en el localStorage
+        document.getElementById('registrar').addEventListener('click', () => {
+            const minutosInput = document.getElementById('minutos');
+            const minutos = parseInt(minutosInput.value);
+            if (!isNaN(minutos) && minutos >= 0) { // Validar minutos positivos
+                const fecha = new Date().toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: '2-digit' });
+                registros.push({ minutos, fecha });
+                if (registros.length > 14) registros.shift(); // Limitar a 14 registros
+                localStorage.setItem('registros', JSON.stringify(registros));
+                cargarHistorial();
+                minutosInput.value = ''; // Limpiar el input
+            } else {
+                alert('Por favor, ingresa un número válido y positivo.');
+            }
+        });
+
+        // Función para borrar los registross
+        document.getElementById('borrar').addEventListener('click', () => {
+            const confirmar = confirm("¿Estás seguro de que deseas borrar todos los registros?");
+            if (confirmar) {
+                localStorage.removeItem('registros');
+                registros = [];
+                cargarHistorial();
+                if (chartInstance) chartInstance.destroy(); // Destruir la gráfica si existe
+            }
+        });
+
+        // Generar gráfica
+        document.getElementById('generar-grafica').addEventListener('click', () => {
+            const ctx = document.getElementById('myChart').getContext('2d');
+            const etiquetas = registros.map((_, index) => `Registro ${index + 1}`);
+            const datos = registros.map(registro => registro.minutos);
+            const colores = registros.map((registro, index) => obtenerColor(registro.minutos, index));
+
+            // Destruir gráfica anterior si existe
+            if (chartInstance) chartInstance.destroy();
+
+            // Configurar y crear la gráfica
+            chartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: etiquetas,
+                    datasets: [{
+                        label: 'Minutos Tardados en Levantarse',
+                        data: datos,
+                        backgroundColor: colores,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: '#333',
+                                font: { size: 14 }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#333',
+                                font: { size: 14 }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#333',
+                                font: { size: 14 }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Cargar el historial al cargar la página
+        cargarHistorial();
+    </script>
+</body>
+</html>
