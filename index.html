@@ -55,7 +55,7 @@
 <body>
     <h1>Registro De Horas Sin</h1>
     <label for="minutos">Horas:</label>
-    <input type="number" id="minutos" placeholder="Ingrese los minutos" required>
+    <input type="number" id="minutos" placeholder="Ingrese las horas" required>
     <button id="registrar">Registrar</button>
     <button id="borrar">Borrar Registros</button>
     <button id="generar-grafica">Generar Gráfica</button>
@@ -81,7 +81,7 @@
             listaHistorial.innerHTML = '';
             registros.forEach((registro, index) => {
                 const li = document.createElement('li');
-                li.textContent = `Registro ${index + 1}: ${registro.minutos} minutos (Registrado el ${registro.fecha})`;
+                li.textContent = `Registro ${index + 1}: ${registro.minutos} horas sin masturbación (Registrado el ${registro.fecha})`;
                 listaHistorial.appendChild(li);
             });
         }
@@ -143,7 +143,7 @@
                 data: {
                     labels: etiquetas,
                     datasets: [{
-                        label: 'Minutos Tardados en Levantarse',
+                        label: 'Horas Tardadas en Levantarse',
                         data: datos,
                         backgroundColor: colores,
                         borderColor: 'rgba(54, 162, 235, 1)',
